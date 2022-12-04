@@ -2,8 +2,8 @@
 
 namespace Repository.Logic
 {
-    public class Repository<TModel> : IDisposable
-        where TModel : Models.ModelObject, Contracts.IIdentifyable, new()
+    public class GenericRepository<TModel> : IDisposable
+        where TModel : Contracts.IIdentifyable, new()
     {
         #region Fields
         private List<TModel> modelList = new();
@@ -13,11 +13,11 @@ namespace Repository.Logic
         protected virtual string FilePath { get; set; } = $"{typeof(TModel).Name}.json";
         #endregion Properties
 
-        protected Repository()
+        public GenericRepository()
         {
             Load(FilePath);
         }
-        protected Repository(string filePath)
+        public GenericRepository(string filePath)
         {
             FilePath = filePath;
             Load(FilePath);
@@ -39,8 +39,8 @@ namespace Repository.Logic
         public virtual Task<TModel[]> GetAllAsync() => Task.Run(() => GetAll());
         #endregion Get
 
-        #region Add
-        public virtual TModel Add(TModel model)
+        #region Insert
+        public virtual TModel Insert(TModel model)
         {
             if (modelList.Any())
             {
@@ -53,11 +53,11 @@ namespace Repository.Logic
             modelList.Add(model);
             return model;
         }
-        public virtual Task AddAsync(TModel model)
+        public virtual Task InsertAsync(TModel model)
         {
-            return Task.Run(() => Add(model));
+            return Task.Run(() => Insert(model));
         }
-        #endregion Add
+        #endregion Insert
 
         #region Update
         public virtual bool Update(TModel model)
@@ -108,7 +108,13 @@ namespace Repository.Logic
         internal virtual void Save(string filePath)
         {
             var jsonData = JsonSerializer.Serialize<TModel[]>(modelList.ToArray());
+            var directoryName = Path.GetDirectoryName(filePath);
 
+            if (string.IsNullOrEmpty(directoryName) == false
+                && Directory.Exists(directoryName) == false)
+            {
+                Directory.CreateDirectory(directoryName);
+            }
             File.WriteAllText(filePath, jsonData);
         }
         internal virtual void Load(string filePath)
